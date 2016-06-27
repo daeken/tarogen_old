@@ -1,6 +1,8 @@
 from pygenic import *
 
-class Frontend(object):
+class Core(object):
+	backends = None
+
 	def __init__(self):
 		signature = 'generated(pc : uint, inst : uint, branched : ref[bool]) -> bool'
 		with Module() as self.module:

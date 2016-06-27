@@ -1,4 +1,4 @@
-from emugen import run, Frontend
+from emugen import build, Core, DagProcessor
 from emugen.common import dag2expr
 from pygenic import *
 import json, os, tblgen
@@ -24,7 +24,10 @@ for name, type, op, funct, dasm, dag in ops:
 			toplevel[op] = [type, {}]
 		toplevel[op][1][funct] = name, type, dasm, dag
 
-class PSX(Frontend):
+class PSXDagProcessor(DagProcessor):
+	pass
+
+class PSX(Core):
 	def decoder(self, func):
 		with Switch(func.inst >> 26):
 			for op, body in toplevel.items():
@@ -48,5 +51,7 @@ class PSX(Frontend):
 	def instruction(self, name, type, dasm, body):
 		Comment(name)
 
+		PSXDagProcessor(body)
+
 if __name__=='__main__':
-	run(PSX)
+	build(PSX)
