@@ -1,29 +1,7 @@
-class DagOp;
+include "common.td"
 
-def add : DagOp;
-def sub : DagOp;
-def and : DagOp;
-def or : DagOp;
-def nor : DagOp;
-def xor : DagOp;
-def mul : DagOp; // word * word -> word
 def mul64 : DagOp; // word * word -> dword
 def umul64 : DagOp; // word * word -> dword
-def div : DagOp; // word / word -> word
-def mod : DagOp; // word % word -> word
-def shl : DagOp;
-def shra : DagOp;
-def shrl : DagOp;
-def signext : DagOp;
-def zeroext : DagOp;
-def cast : DagOp;
-
-def eq : DagOp;
-def ge : DagOp;
-def gt : DagOp;
-def le : DagOp;
-def lt : DagOp;
-def neq : DagOp;
 
 def branch : DagOp;
 def branch_default : DagOp;
@@ -36,19 +14,10 @@ def check_overflow : DagOp;
 def check_store_alignment : DagOp;
 def check_load_alignment : DagOp;
 def pcd : DagOp;
-def raise : DagOp;
 def load : DagOp;
 def store : DagOp;
 
-def block : DagOp;
-def if : DagOp;
-def let : DagOp;
-def rlet: DagOp;
-def set : DagOp;
 def defer_set : DagOp;
-def when : DagOp;
-def unsigned : DagOp;
-def signed : DagOp;
 
 // Special traps
 def break : DagOp;
@@ -59,9 +28,6 @@ def do_load : DagOp;
 def div_delay : DagOp;
 def mul_delay : DagOp;
 def absorb_muldiv_delay : DagOp;
-
-class Exception;
-def ArithmeticOverflow : Exception;
 
 class BaseInst<bits<6> op, string disasm, dag eval> {
 	bits<6> Opcode = op;
