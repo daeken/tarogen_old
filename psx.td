@@ -235,7 +235,7 @@ def BNE : IType<0b000101, "bne %$rs, %$rt, $target",
 >;
 
 def BREAK : SType<0b001101, "break $code", 
-	(break $code, $pc, $inst)
+	(break $code)
 >;
 
 defm CFCz : CFDef<0b010000, 0b00010, "cfc$cop %$rt, $rd", 
@@ -263,7 +263,7 @@ multiclass COPzType<string disasm, dag eval> {
 	defm : CFDef<0b010000, 0b11111, disasm, eval>;
 }
 defm COPz : COPzType<"cop$cop $cofun", 
-	(copfun $cop, $cofun, $inst)
+	(copfun $cop, $cofun)
 >;
 
 defm CTCz : CFDef<0b010000, 0b00110, "ctc$cop %$rt, $rd", 
@@ -556,7 +556,7 @@ def SWR : IType<0b101110, "swr %$rt, $offset(%$rs)",
 >;
 
 def SYSCALL : SType<0b001100, "syscall $code", 
-	(syscall $code, $pc, $inst)
+	(syscall $code)
 >;
 
 def XOR : RType<0b100110, "xor %$rd, %$rs, %$rt", 

@@ -1,3 +1,4 @@
+from pygenic import Node
 from tblgen import Dag
 
 def dag2expr(dag):
@@ -13,3 +14,9 @@ def dag2expr(dag):
 		return [dag2expr(sep(elem)) for elem in dag.elements]
 	else:
 		return dag
+
+class Emit(Node):
+	pass
+
+def addEmits(module):
+	return module
