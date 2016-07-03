@@ -7,8 +7,8 @@ def hint(**kwargs):
 		return func
 	return sub
 
-def compiletime(func):
-	func.compiletime = True
+def runtime(func):
+	func.runtime = True
 	return func
 
 class DagProcessor(object):
@@ -25,24 +25,31 @@ class DagProcessor(object):
 		name, rest = dag[0], dag[1:]
 
 		def call(func):
-			if not hasattr(func, 'hints'):
-				return func(*map(self.__process__, rest))
-			hints = func.hints
-			if func.func_code.co_flags & 4: # *args
-				argnames = func.func_code.co_varnames[:func.func_code.co_argcount+1]
-				argnames = argnames[1:] if argnames[0] == 'self' else argnames
-				args = []
-				for i, arg in enumerate(argnames):
-					raw = arg in hints and hints[arg] == 'raw'
-					if i == len(argnames) - 1:
-						args += rest[i:] if raw else map(self.__process__, rest[i:])
-					else:
-						args.append(rest[i] if raw else self.__process__(rest[i]))
-				return func(*args)
+			def subcall():
+				if not hasattr(func, 'hints'):
+					return func(*map(self.__process__, rest))
+				hints = func.hints
+				if func.func_code.co_flags & 4: # *args
+					argnames = func.func_code.co_varnames[:func.func_code.co_argcount+1]
+					argnames = argnames[1:] if argnames[0] == 'self' else argnames
+					args = []
+					for i, arg in enumerate(argnames):
+						raw = arg in hints and hints[arg] == 'raw'
+						if i == len(argnames) - 1:
+							args += rest[i:] if raw else map(self.__process__, rest[i:])
+						else:
+							args.append(rest[i] if raw else self.__process__(rest[i]))
+					return func(*args)
+				else:
+					argnames = func.func_code.co_varnames[:func.func_code.co_argcount]
+					argnames = argnames[1:] if argnames[0] == 'self' else argnames
+					return func(*[rest[i] if arg in hints and hints[arg] == 'raw' else self.__process__(rest[i]) for i, arg in enumerate(argnames)])
+
+			if hasattr(func, 'runtime') and func.runtime:
+				with Emit():
+					subcall()
 			else:
-				argnames = func.func_code.co_varnames[:func.func_code.co_argcount]
-				argnames = argnames[1:] if argnames[0] == 'self' else argnames
-				return func(*[rest[i] if arg in hints and hints[arg] == 'raw' else self.__process__(rest[i]) for i, arg in enumerate(argnames)])
+				subcall()
 
 		if hasattr(self, name):
 			return call(getattr(self, name))
@@ -51,13 +58,11 @@ class DagProcessor(object):
 		else:
 			print 'Unsupported dag:', name, rest
 
-	@compiletime
 	@hint(body='raw')
 	def block(self, *body):
 		for elem in body:
 			self.__process__(elem)
 
-	@compiletime
 	@hint(if_='raw', else_='raw')
 	def if_(self, comp, if_, else_):
 		with If(comp):
@@ -65,7 +70,6 @@ class DagProcessor(object):
 		with Else():
 			self.__process__(else_)
 
-	@compiletime
 	@hint(var='raw', body='raw')
 	def let(self, var, value, *body):
 		self.func[var.replace('$', '')] = value
@@ -73,31 +77,26 @@ class DagProcessor(object):
 		for elem in body:
 			self.__process__(elem)
 
+	@runtime
 	@hint(var='raw', body='raw')
 	def rlet(self, var, value, *body):
-		with Emit():
-			self.let(var, value, *body)
+		self.let(var, value, *body)
 
-	@compiletime
 	def signed(self, value):
 		return Cast(value, types.int)
-	@compiletime
 	def unsigned(self, value):
 		return Cast(value, types.uint)
 	@hint(size='raw')
 	def cast(self, size, value):
 		return Cast(value, types['uint%i' % size])
 
-	@compiletime
 	def signext(self, size, value):
 		return Call('signext', size, value)
 
-	@compiletime
 	def zeroext(self, size, value):
 		return Call('zeroext', size, value)
 
 	def _binary(op):
-		@compiletime
 		def func(self, left, right):
 			return Binary(op, left, right)
 		return func
@@ -118,7 +117,6 @@ class DagProcessor(object):
 	and_ = _binary('&')
 	or_ = _binary('|')
 	xor = _binary('^')
-	@compiletime
 	def nor(self, left, right):
 		return Unary('~', Binary('|', left, right))
 
@@ -128,4 +126,4 @@ class DagProcessor(object):
 
 # Would just decorate these, but Python is weird about using staticmethod decorators in the same class
 DagProcessor.hint = staticmethod(hint)
-DagProcessor.compiletime = staticmethod(compiletime)
+DagProcessor.runtime = staticmethod(runtime)

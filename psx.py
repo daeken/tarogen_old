@@ -25,54 +25,66 @@ for name, type, op, funct, dasm, dag in ops:
 		toplevel[op][1][funct] = name, type, dasm, dag
 
 class PSXDagProcessor(DagProcessor):
+	@DagProcessor.runtime
 	def absorb_muldiv_delay(self):
 		pass
+	@DagProcessor.runtime
 	def mul_delay(self, left, right, signed):
-		return Call('mul_delay', left, right, signed)
+		Call('mul_delay', left, right, signed)
+	@DagProcessor.runtime
 	def div_delay(self):
-		return Call('div_delay')
+		Call('div_delay')
 
+	@DagProcessor.runtime
 	def branch(self, addr):
 		Call('branch', addr)
 
+	@DagProcessor.runtime
 	def branch_default(self):
 		Call('branch', self.pc() + 8)
 
+	@DagProcessor.runtime
 	def break_(self, code):
 		Call('break_', code)
 
 	def check_load_alignment(self, addr, size):
-		return Call('check_load_alignment', addr, size)
-
+		Call('check_load_alignment', addr, size)
 	def check_store_alignment(self, addr, size):
-		return Call('check_store_alignment', addr, size)
+		Call('check_store_alignment', addr, size)
 
+	@DagProcessor.runtime
 	def gpr(self, num):
 		return self.func.state[num]
+	@DagProcessor.runtime
 	def hi(self):
 		return self.func.state[34]
+	@DagProcessor.runtime
 	def lo(self):
 		return self.func.state[35]
 	
-	@DagProcessor.compiletime
 	def pc(self):
 		return self.func.PC
-	@DagProcessor.compiletime
 	def pcd(self):
 		return self.pc() + 4
 
+	@DagProcessor.runtime
 	def load(self, size, address):
 		return Call('load_memory', size, address)
+	@DagProcessor.runtime
 	def store(self, size, address, value):
-		return Call('store_memory', size, address, value)
+		Call('store_memory', size, address, value)
 
+	@DagProcessor.runtime
 	def copreg(self, cop, reg):
 		return Call('read_copreg', cop, reg)
+	@DagProcessor.runtime
 	def copcreg(self, cop, reg):
 		return Call('read_copcreg', cop, reg)
+	@DagProcessor.runtime
 	def copfun(self, cop, cofun):
-		return Call('copfun', cop, cofun)
+		Call('copfun', cop, cofun)
 
+	@DagProcessor.runtime
 	@DagProcessor.hint(left='raw')
 	def defer_set(self, left, right):
 		assert left[0] == 'gpr'
@@ -81,10 +93,12 @@ class PSXDagProcessor(DagProcessor):
 		self.func.LDWhich = self.__process__(left[1])
 		self.func.LDValue = right
 
+	@DagProcessor.runtime
 	@DagProcessor.hint(expr='raw')
 	def check_overflow(self, expr):
 		pass
 
+	@DagProcessor.runtime
 	@DagProcessor.hint(left='raw')
 	def set(self, left, right):
 		if left[0] == 'gpr':
@@ -94,12 +108,13 @@ class PSXDagProcessor(DagProcessor):
 		elif left[0] == 'lo':
 			self.func.state[35] = right
 		elif left[0] == 'copreg':
-			return Call('write_copreg', self.__process__(left[1]), self.__process__(left[2]), right)
+			Call('write_copreg', self.__process__(left[1]), self.__process__(left[2]), right)
 		elif left[0] == 'copcreg':
-			return Call('write_copcreg', self.__process__(left[1]), self.__process__(left[2]), right)
+			Call('write_copcreg', self.__process__(left[1]), self.__process__(left[2]), right)
 		else:
 			print 'Unsupported set:', `left`, `right`
 
+	@DagProcessor.runtime
 	def syscall(self, code):
 		Call('syscall_', code)
 

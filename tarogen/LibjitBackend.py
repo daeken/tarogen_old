@@ -7,7 +7,7 @@ class LibjitEmitter(Transform):
 		self.passthru(*body)
 
 	def Assign(self, left, right):
-		print 'foo?', left, right
+		pass
 
 @Backend.register
 class LibjitBackend(Backend):
