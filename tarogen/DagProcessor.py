@@ -7,6 +7,10 @@ def hint(**kwargs):
 		return func
 	return sub
 
+def compiletime(func):
+	func.compiletime = True
+	return func
+
 class DagProcessor(object):
 	def __init__(self, func, dag):
 		self.func = func
@@ -47,11 +51,13 @@ class DagProcessor(object):
 		else:
 			print 'Unsupported dag:', name, rest
 
+	@compiletime
 	@hint(body='raw')
 	def block(self, *body):
 		for elem in body:
 			self.__process__(elem)
 
+	@compiletime
 	@hint(if_='raw', else_='raw')
 	def if_(self, comp, if_, else_):
 		with If(comp):
@@ -59,6 +65,7 @@ class DagProcessor(object):
 		with Else():
 			self.__process__(else_)
 
+	@compiletime
 	@hint(var='raw', body='raw')
 	def let(self, var, value, *body):
 		self.func[var.replace('$', '')] = value
@@ -71,21 +78,26 @@ class DagProcessor(object):
 		with Emit():
 			self.let(var, value, *body)
 
+	@compiletime
 	def signed(self, value):
 		return Cast(value, types.int)
+	@compiletime
 	def unsigned(self, value):
 		return Cast(value, types.uint)
 	@hint(size='raw')
 	def cast(self, size, value):
 		return Cast(value, types['uint%i' % size])
 
+	@compiletime
 	def signext(self, size, value):
 		return Call('signext', size, value)
 
+	@compiletime
 	def zeroext(self, size, value):
 		return Call('zeroext', size, value)
 
 	def _binary(op):
+		@compiletime
 		def func(self, left, right):
 			return Binary(op, left, right)
 		return func
@@ -106,6 +118,7 @@ class DagProcessor(object):
 	and_ = _binary('&')
 	or_ = _binary('|')
 	xor = _binary('^')
+	@compiletime
 	def nor(self, left, right):
 		return Unary('~', Binary('|', left, right))
 
@@ -113,5 +126,6 @@ class DagProcessor(object):
 	shra = _binary('>>')
 	shrl = _binary('>>>')
 
-# Would just decorate this, but Python is weird about using staticmethod decorators in the same class
+# Would just decorate these, but Python is weird about using staticmethod decorators in the same class
 DagProcessor.hint = staticmethod(hint)
+DagProcessor.compiletime = staticmethod(compiletime)

@@ -1,6 +1,13 @@
 from Backend import Backend
 from pygenic import *
-from emugen.common import Emit, addEmits
+from common import Emit, addEmits
+
+class LibjitEmitter(Transform):
+	def Emit(self, *body):
+		self.passthru(*body)
+
+	def Assign(self, left, right):
+		print 'foo?', left, right
 
 @Backend.register
 class LibjitBackend(Backend):
@@ -19,4 +26,4 @@ class LibjitBackend(Backend):
 		return module
 
 	def mapEmit(self, node):
-		return node
+		return LibjitEmitter().transform(node)

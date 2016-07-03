@@ -1,6 +1,6 @@
 from Backend import Backend
 from pygenic import *
-from emugen.common import Emit
+from common import Emit
 
 @Backend.register
 class InterpreterBackend(Backend):

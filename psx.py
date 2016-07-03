@@ -1,5 +1,5 @@
-from emugen import build, Core, DagProcessor
-from emugen.common import dag2expr
+from tarogen import build, Core, DagProcessor
+from tarogen.common import dag2expr
 from pygenic import *
 import json, os, tblgen
 
@@ -53,8 +53,11 @@ class PSXDagProcessor(DagProcessor):
 		return self.func.state[34]
 	def lo(self):
 		return self.func.state[35]
+	
+	@DagProcessor.compiletime
 	def pc(self):
 		return self.func.PC
+	@DagProcessor.compiletime
 	def pcd(self):
 		return self.pc() + 4
 
